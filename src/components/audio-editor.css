@@ -1,0 +1,46 @@
+/* Custom styles for WaveSurfer handles */
+
+/* The handles are divs with class .wavesurfer-handle */
+/* We want distinct, thick visual handles to replicate the "two side" look */
+
+/* Left Handle */
+.wavesurfer-region::part(region-handle-left) {
+  width: 4px !important;
+  background-color: #000000 !important;
+  /* Black */
+  border-radius: 4px 0 0 4px;
+}
+
+/* Right Handle */
+.wavesurfer-region::part(region-handle-right) {
+  width: 4px !important;
+  background-color: #000000 !important;
+  /* Black */
+  border-radius: 0 4px 4px 0;
+}
+
+/* Add a visual "grabber" icon if possible via ::before/::after, 
+   but WaveSurfer might shadowDOM or inline style this. 
+   Let's try standard CSS first which usually applies if not shadow DOM.
+*/
+
+/* 
+  WaveSurfer 7 uses shadow DOM or specific structure. 
+  If Shadow DOM is used, external CSS might not apply easily unless using parts.
+  The regions plugin exposes parts.
+*/
+
+[part="region-handle-left"],
+[part="region-handle-right"] {
+  background-color: #ffffff !important;
+  width: 6px !important;
+  max-width: 6px !important;
+}
+
+/* Let's try to target the elements generally if parts aren't working immediately */
+.wavesurfer-handle {
+  width: 6px !important;
+  background-color: white !important;
+  border-radius: 4px;
+  height: 100%;
+}
