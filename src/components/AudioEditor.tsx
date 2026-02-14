@@ -23,6 +23,7 @@ export interface ProcessOptions {
         duration: number;
     };
     mode: 'extract' | 'delete';
+    totalDuration?: number;
 }
 
 interface AudioEditorProps {
