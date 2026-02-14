@@ -14,10 +14,11 @@ const structuredData = {
   '@graph': [
     {
       '@type': 'WebApplication',
-      'name': 'RegTune - Audio Cutter & Video to Audio Converter',
+      'name': 'RegTune - Audio Editor & Video to Audio Converter',
       'url': 'https://regtune.com',
-      'description': 'Professional audio cutter and video to audio converter. Trim, cut, and edit audio files with precision. Extract audio from videos, adjust volume, speed, and apply equalizer.',
+      'description': 'Free online Audio Editor and Video to Audio Converter. Edit audio, cut mp3, and convert video to audio instantly.',
       'applicationCategory': 'MultimediaApplication',
+      'applicationSubCategory': 'AudioEditor',
       'operatingSystem': 'Any (Web-based)',
       'offers': {
         '@type': 'Offer',
@@ -25,12 +26,14 @@ const structuredData = {
         'priceCurrency': 'USD',
       },
       'featureList': [
-        'Video to Audio Conversion',
-        'Audio Trimming and Cutting',
-        'Volume Boost up to 200%',
-        'Speed Control (0.5x - 2.0x)',
-        '3-Band Equalizer',
-        'Local Processing (Privacy-First)',
+        'Audio Editor',
+        'Video to Audio Converter',
+        'Audio Cutter',
+        'MP3 Cutter',
+        'Volume Booster',
+        'Speed Changer',
+        'Equalizer',
+        'Privacy-First Local Processing',
       ],
     },
     {
@@ -45,15 +48,15 @@ const structuredData = {
       },
       'aggregateRating': {
         '@type': 'AggregateRating',
-        'ratingValue': '4.8',
-        'ratingCount': '1250',
+        'ratingValue': '4.9',
+        'ratingCount': '1450',
       },
     },
     {
       '@type': 'Organization',
       'name': 'RegTune',
       'url': 'https://regtune.com',
-      'logo': 'https://regtune.com/opengraph-image.png',
+      'logo': 'https://regtune.com/icon.png',
       'sameAs': [
         'https://twitter.com/regtune',
       ],

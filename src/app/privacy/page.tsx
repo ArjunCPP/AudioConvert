@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Privacy Policy',
-    description: 'RegTune Privacy Policy - We do not collect, store, or upload your files. All audio processing happens locally in your browser. Your privacy is protected by design.',
+    title: 'Privacy Policy - RegTune',
+    description: 'RegTune Privacy Policy. We do not collect, store, or upload your files. All audio processing happens locally in your browser for maximum privacy.',
     openGraph: {
         title: 'Privacy Policy | RegTune',
         description: 'We do not collect, store, or upload your files. All audio processing happens locally in your browser.',

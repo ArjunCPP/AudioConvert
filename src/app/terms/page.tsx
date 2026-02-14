@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Terms and Conditions',
-    description: 'RegTune Terms and Conditions - Read our terms of service for using our free online audio cutter and video to audio converter tool.',
+    title: 'Terms of Service - RegTune',
+    description: 'Read our Terms of Service. RegTune offers free online audio editing and conversion tools with privacy-first local processing.',
     openGraph: {
-        title: 'Terms and Conditions | RegTune',
-        description: 'Terms of service for using RegTune audio editing tools.',
+        title: 'Terms of Service | RegTune',
+        description: 'Read our Terms of Service for using RegTune audio editing tools.',
     },
 };
 
