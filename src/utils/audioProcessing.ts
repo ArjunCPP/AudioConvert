@@ -47,12 +47,20 @@ export const trimAudio = async (
     audioBlob: Blob | File,
     start: number,
     end: number,
-    options: { volume: number; speed: number; eq: { bass: number; mid: number; treble: number } },
+    options: {
+        volume: number;
+        speed: number;
+        eq: { bass: number; mid: number; treble: number };
+        format: string;
+        fade: { in: boolean; out: boolean; duration: number };
+        mode: 'extract' | 'delete';
+        totalDuration?: number; // Required for delete mode
+    },
     onProgress?: (progress: number) => void
 ): Promise<Blob> => {
     const ffmpeg = await loadFFmpeg();
     const inputName = 'input_audio';
-    const outputName = 'output_processed.mp3';
+    const outputName = `output_processed.${options.format}`;
 
     await ffmpeg.writeFile(inputName, await fetchFile(audioBlob));
 
@@ -62,55 +70,139 @@ export const trimAudio = async (
         });
     }
 
-    // Construct Fileter Chain
-    // Volume: volume=1.5
-    // Speed: atempo=1.2 (atempo filter accepts 0.5 to 100.0)
-    // EQ: equalizer=f=100:width_type=h:width=200:g=-10, equalizer=f=1000:width_type=h:width=200:g=0...
-    // Simplification for 3-band EQ:
-    // Bass: lowshelf (f ~ 100Hz)
-    // Mid: trigger generally ~1kHz (peaking)
-    // Treble: highshelf (f ~ 10kHz)
+    // --- Filter Chain Construction ---
+    // We will build a sequential chain of filters:
+    // [0:a] -> [effects] -> [trimmed] -> [faded] -> [out]
 
-    const filters: string[] = [];
+    let filterChain = "";
+    let currentStream = "[0:a]"; // Start with input audio stream
 
-    // Volume (converted from % to multiplier)
+    // 1. Core Effects (Volume, Speed, EQ)
+    const effectFilters: string[] = [];
+
+    // Volume
     if (options.volume !== 100) {
-        filters.push(`volume=${options.volume / 100}`);
+        effectFilters.push(`volume=${options.volume / 100}`);
     }
 
-    // Speed
+    // Speed (atempo filter accepts 0.5 to 2.0)
     if (options.speed !== 1) {
-        filters.push(`atempo=${options.speed}`);
+        effectFilters.push(`atempo=${options.speed}`);
     }
 
     // EQ
-    // Bass (Low Shelf at 100Hz)
-    if (options.eq.bass !== 0) {
-        filters.push(`equalizer=f=100:width_type=h:width=200:g=${options.eq.bass}`);
-        // Or simpler: bass=g=...
-    }
-    // Mid (Peaking at 1000Hz)
-    if (options.eq.mid !== 0) {
-        filters.push(`equalizer=f=1000:width_type=h:width=200:g=${options.eq.mid}`);
-    }
-    // Treble (High Shelf at 10000Hz)
-    if (options.eq.treble !== 0) {
-        filters.push(`equalizer=f=10000:width_type=h:width=200:g=${options.eq.treble}`);
+    if (options.eq.bass !== 0) effectFilters.push(`equalizer=f=100:width_type=h:width=200:g=${options.eq.bass}`);
+    if (options.eq.mid !== 0) effectFilters.push(`equalizer=f=1000:width_type=h:width=200:g=${options.eq.mid}`);
+    if (options.eq.treble !== 0) effectFilters.push(`equalizer=f=10000:width_type=h:width=200:g=${options.eq.treble}`);
+
+    // If we have effects, apply them first
+    if (effectFilters.length > 0) {
+        filterChain += `${currentStream}${effectFilters.join(',')}[effects];`;
+        currentStream = "[effects]";
     }
 
-    const filterGraph = filters.length > 0 ? filters.join(',') : null;
+    // 2. Cut/Trigger Logic
+    // Apply logic to 'currentStream'
+    if (options.mode === 'delete' && options.totalDuration) {
+        // DELETE MODE: Keep [0...start] AND [end...totalDuration]
+        // Note: We use 'atrim' combined with 'asetpts' to reset timestamps.
 
-    const args = [
-        '-i', inputName,
-        '-ss', start.toString(),
-        '-to', end.toString()
-    ];
+        // Part 1: Start to 'start'
+        filterChain += `${currentStream}atrim=start=0:end=${start},asetpts=PTS-STARTPTS[part1];`;
 
-    if (filterGraph) {
-        args.push('-af', filterGraph);
+        // Part 2: 'end' to 'totalDuration'
+        // If end >= totalDuration, this part might be empty or error, so we handle standard case.
+        // atrim=start=end implies until end of file if 'end' param is omitted.
+        filterChain += `${currentStream}atrim=start=${end},asetpts=PTS-STARTPTS[part2];`;
+
+        // Concatenate
+        filterChain += `[part1][part2]concat=n=2:v=0:a=1[trimmed];`;
+        currentStream = "[trimmed]";
+
+    } else {
+        // EXTRACT MODE: Keep [start...end] (Default)
+        filterChain += `${currentStream}atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[trimmed];`;
+        currentStream = "[trimmed]";
     }
 
-    args.push('-c:a', 'libmp3lame', '-q:a', '2', outputName);
+    // 3. Fade Effects
+    // Applied to the [trimmed] stream
+
+    // Calculate duration of the resulting file for fade out
+    let resultDuration = 0;
+    if (options.mode === 'extract') {
+        resultDuration = end - start;
+    } else if (options.mode === 'delete' && options.totalDuration) {
+        resultDuration = options.totalDuration - (end - start);
+    }
+    // Adjust duration for speed changes!
+    if (options.speed !== 1) {
+        resultDuration = resultDuration / options.speed;
+    }
+
+    const fadeFilters: string[] = [];
+    if (options.fade.in) {
+        const d = Math.min(options.fade.duration, resultDuration / 2);
+        fadeFilters.push(`afade=t=in:ss=0:d=${d}`);
+    }
+    if (options.fade.out) {
+        const d = Math.min(options.fade.duration, resultDuration / 2);
+        // Start time for fade out should be duration - fadeDuration
+        const startTime = Math.max(0, resultDuration - d);
+        fadeFilters.push(`afade=t=out:st=${startTime}:d=${d}`);
+    }
+
+    if (fadeFilters.length > 0) {
+        filterChain += `${currentStream}${fadeFilters.join(',')}[final]`;
+        currentStream = "[final]";
+    }
+
+    // Remove trailing semicolon to prevent FFmpeg errors
+    if (filterChain.endsWith(';')) {
+        filterChain = filterChain.slice(0, -1);
+    }
+
+    // --- Construct FFmpeg Arguments ---
+    const args = ['-i', inputName];
+
+    // Logging for debugging
+    ffmpeg.on('log', ({ message }) => {
+        console.log('FFmpeg Log:', message);
+    });
+
+    // Determine Codec
+    let codec = 'libmp3lame';
+    switch (options.format) {
+        case 'mp3': codec = 'libmp3lame'; break;
+        case 'wav': codec = 'pcm_s16le'; break;
+        case 'aac': codec = 'aac'; break;
+        case 'm4a': codec = 'aac'; break;
+        case 'flac': codec = 'flac'; break;
+        case 'ogg': codec = 'libvorbis'; break;
+        default: codec = 'libmp3lame';
+    }
+
+    // Apply Filter Complex
+    if (filterChain) {
+        args.push('-filter_complex', filterChain);
+        // Map the final stream
+        // Remove brackets for label
+        const mapLabel = currentStream.replace('[', '').replace(']', '');
+        if (mapLabel !== '0:a') {
+            args.push('-map', `[${mapLabel}]`);
+        }
+    }
+
+    args.push('-c:a', codec);
+
+    // Format Specific Flags
+    if (options.format === 'mp3') {
+        args.push('-q:a', '2'); // Variable Bitrate (High Quality)
+    } else if (options.format === 'm4a') {
+        args.push('-movflags', '+faststart');
+    }
+
+    args.push(outputName);
 
     // Run FFmpeg
     await ffmpeg.exec(args);
@@ -120,7 +212,18 @@ export const trimAudio = async (
     await ffmpeg.deleteFile(inputName);
     await ffmpeg.deleteFile(outputName);
 
-    return new Blob([data as any], { type: 'audio/mp3' });
+    // Determine MIME type
+    let mimeType = 'audio/mpeg';
+    switch (options.format) {
+        case 'mp3': mimeType = 'audio/mpeg'; break;
+        case 'wav': mimeType = 'audio/wav'; break;
+        case 'm4a': mimeType = 'audio/mp4'; break;
+        case 'aac': mimeType = 'audio/aac'; break;
+        case 'flac': mimeType = 'audio/flac'; break;
+        case 'ogg': mimeType = 'audio/ogg'; break;
+    }
+
+    return new Blob([data as any], { type: mimeType });
 };
 
 const fetchFile = async (file: File | Blob): Promise<Uint8Array> => {

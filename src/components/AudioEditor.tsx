@@ -16,6 +16,13 @@ export interface ProcessOptions {
         mid: number;
         treble: number;
     };
+    format: string;
+    fade: {
+        in: boolean;
+        out: boolean;
+        duration: number;
+    };
+    mode: 'extract' | 'delete';
 }
 
 interface AudioEditorProps {
@@ -53,6 +60,15 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
     const [speed, setSpeed] = useState(1); // multiplier 0.5-2
     const [eq, setEq] = useState({ bass: 0, mid: 0, treble: 0 }); // dB -10 to +10
 
+    // New Features State
+    const [format, setFormat] = useState('mp3');
+    const [cutMode, setCutMode] = useState<'extract' | 'delete'>('extract');
+    const [fadeIn, setFadeIn] = useState(false);
+    const [fadeOut, setFadeOut] = useState(false);
+    // Manual time inputs (string for easier typing)
+    const [startTimeInput, setStartTimeInput] = useState('00:00.0');
+    const [endTimeInput, setEndTimeInput] = useState('00:00.0');
+
     // Initialize WaveSurfer
     useEffect(() => {
         if (!containerRef.current || !audioUrl || !timelineRef.current) return;
@@ -87,18 +103,25 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
 
         ws.on('ready', () => {
             setIsReady(true);
-            setDuration(ws.getDuration());
+            const dur = ws.getDuration();
+            setDuration(dur);
+
+            // Initial region
+            const initialStart = 0;
+            const initialEnd = dur;
 
             wsRegions.addRegion({
-                start: 0,
-                end: ws.getDuration(),
-                color: 'rgba(0, 0, 0, 0.05)', // Subtle dark overlay
+                start: initialStart,
+                end: initialEnd,
+                color: 'rgba(59, 130, 246, 0.2)', // Blue-500 with opacity (High visibility)
                 drag: true,
                 resize: true,
             });
 
-            setRegionStart(0);
-            setRegionEnd(ws.getDuration());
+            setRegionStart(initialStart);
+            setRegionEnd(initialEnd);
+            setStartTimeInput(formatTime(initialStart));
+            setEndTimeInput(formatTime(initialEnd));
 
             // Setup WebAudio for Volume Amplification
             const mediaElement = ws.getMediaElement();
@@ -120,7 +143,6 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
             }
 
             // Apply initial defaults
-            // We set the media element volume to 1 (max) and control actual volume via GainNode
             ws.setVolume(1);
             ws.setPlaybackRate(speed);
         });
@@ -133,6 +155,8 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
         wsRegions.on('region-updated', (region) => {
             setRegionStart(region.start);
             setRegionEnd(region.end);
+            setStartTimeInput(formatTime(region.start));
+            setEndTimeInput(formatTime(region.end));
         });
 
         wavesurfer.current = ws;
@@ -161,6 +185,43 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
 
     }, [volume, speed, eq, isReady]);
 
+    // Manual Time Update Handler
+    const handleTimeInputBlur = (type: 'start' | 'end', value: string) => {
+        // Parse "MM:SS.ms" or just seconds
+        const parts = value.split(':');
+        let seconds = 0;
+        if (parts.length === 2) {
+            seconds = parseInt(parts[0]) * 60 + parseFloat(parts[1]);
+        } else {
+            seconds = parseFloat(value);
+        }
+
+        if (isNaN(seconds)) return;
+
+        // Clamp values
+        if (type === 'start') {
+            seconds = Math.max(0, Math.min(seconds, regionEnd - 0.1));
+            setRegionStart(seconds);
+            setStartTimeInput(formatTime(seconds));
+        } else {
+            seconds = Math.max(regionStart + 0.1, Math.min(seconds, duration));
+            setRegionEnd(seconds);
+            setEndTimeInput(formatTime(seconds));
+        }
+
+        // Update functionality
+        const regionsPlugin = regions.current;
+        if (regionsPlugin) {
+            const region = regionsPlugin.getRegions()[0];
+            if (region) {
+                region.setOptions({
+                    start: type === 'start' ? seconds : regionStart,
+                    end: type === 'end' ? seconds : regionEnd
+                });
+            }
+        }
+    };
+
     const togglePlay = () => {
         wavesurfer.current?.playPause();
     };
@@ -169,93 +230,142 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         const ms = Math.floor((seconds % 1) * 10);
-        return `${mins}:${secs.toString().padStart(2, '0')}.${ms}`;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms}`;
     };
 
     if (!audioUrl) return null;
 
     return (
-        <div className="w-full max-w-5xl mx-auto bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col">
+        <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
-                <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-slate-200 rounded-lg text-slate-700">
-                        <Volume2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <h3 className="font-medium text-slate-800 truncate max-w-xs" title={fileName}>{fileName}</h3>
-                        <div className="text-xs text-slate-500 font-mono">
-                            {formatTime(currentTime)} <span className="text-slate-400">/</span> {formatTime(duration)}
+            {/* Main Editor Section */}
+            <div className="w-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
+                    <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-slate-200 rounded-lg text-slate-700">
+                            <Volume2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="font-medium text-slate-800 truncate max-w-xs" title={fileName}>{fileName}</h3>
+                            <div className="text-xs text-slate-500 font-mono">
+                                {formatTime(currentTime)} <span className="text-slate-400">/</span> {formatTime(duration)}
+                            </div>
                         </div>
                     </div>
+                    <button onClick={onReset} className="flex items-center space-x-2 text-slate-500 hover:text-slate-800 transition-colors text-sm font-medium">
+                        <RotateCcw className="w-4 h-4" />
+                        <span className="hidden sm:inline">Reset</span>
+                    </button>
                 </div>
-                <button onClick={onReset} className="flex items-center space-x-2 text-slate-500 hover:text-slate-800 transition-colors text-sm">
-                    <RotateCcw className="w-4 h-4" />
-                    <span className="hidden sm:inline">Reset</span>
-                </button>
-            </div>
 
-            {/* Toolbar */}
-            <div className="flex items-center justify-center space-x-1 p-2 bg-white border-b border-slate-200">
-                <ToolButton
-                    icon={<BoxSelect className="w-4 h-4" />}
-                    label="Trim"
-                    active={activeTool === 'trim'}
-                    onClick={() => setActiveTool('trim')}
-                />
-                <ToolButton
-                    icon={<Volume2 className="w-4 h-4" />}
-                    label="Volume"
-                    active={activeTool === 'volume'}
-                    onClick={() => setActiveTool('volume')}
-                />
-                <ToolButton
-                    icon={<Gauge className="w-4 h-4" />}
-                    label="Speed"
-                    active={activeTool === 'speed'}
-                    onClick={() => setActiveTool('speed')}
-                />
-                <ToolButton
-                    icon={<Sliders className="w-4 h-4" />}
-                    label="Equalizer"
-                    active={activeTool === 'eq'}
-                    onClick={() => setActiveTool('eq')}
-                />
-            </div>
-
-            {/* Main Editor Area */}
-            <div className="relative p-8 bg-white min-h-[200px]">
-                <div ref={containerRef} className="w-full" />
-                <div ref={timelineRef} className="w-full mt-1" />
-
-                {/* Selection Info Overlay */}
-                <div className="absolute top-4 right-4 flex flex-col items-end pointer-events-none">
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Selection</span>
-                    <div className="flex items-center space-x-2 bg-white/90 backdrop-blur px-3 py-1.5 rounded border border-slate-200 shadow-sm">
-                        <span className="font-mono text-slate-800 text-sm">{formatTime(regionStart)}</span>
-                        <span className="text-slate-400 text-xs">-</span>
-                        <span className="font-mono text-slate-800 text-sm">{formatTime(regionEnd)}</span>
-                    </div>
+                {/* Toolbar */}
+                <div className="flex items-center justify-center space-x-2 p-3 bg-white border-b border-slate-200">
+                    <ToolButton
+                        icon={<BoxSelect className="w-4 h-4" />}
+                        label="Trim"
+                        active={activeTool === 'trim'}
+                        onClick={() => setActiveTool('trim')}
+                    />
+                    <ToolButton
+                        icon={<Volume2 className="w-4 h-4" />}
+                        label="Volume"
+                        active={activeTool === 'volume'}
+                        onClick={() => setActiveTool('volume')}
+                    />
+                    <ToolButton
+                        icon={<Gauge className="w-4 h-4" />}
+                        label="Speed"
+                        active={activeTool === 'speed'}
+                        onClick={() => setActiveTool('speed')}
+                    />
+                    <ToolButton
+                        icon={<Sliders className="w-4 h-4" />}
+                        label="Equalizer"
+                        active={activeTool === 'eq'}
+                        onClick={() => setActiveTool('eq')}
+                    />
                 </div>
-            </div>
 
-            {/* Contextual Controls & Playback */}
-            <div className="bg-slate-50 border-t border-slate-200">
+                {/* Main Editor Area */}
+                <div className="relative p-8 bg-zinc-50 min-h-[220px]">
+                    <div ref={containerRef} className="w-full" />
+                    <div ref={timelineRef} className="w-full mt-2" />
+                </div>
 
-                {/* Dynamic Control Panel */}
-                <div className="px-6 py-6 border-b border-slate-200 min-h-[100px] flex items-center justify-center">
+                {/* Contextual Controls Panel */}
+                <div className="bg-white border-t border-slate-200 px-6 py-8 min-h-[140px] flex items-center justify-center">
                     {activeTool === 'trim' && (
-                        <div className="text-center text-slate-500 text-sm max-w-md">
-                            <p>Drag the handles on the timeline to select the part of the audio you want to keep.</p>
+                        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                            {/* 1. Time Selection */}
+                            <div className="flex flex-col items-center">
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Time Range</h4>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={startTimeInput}
+                                        onChange={(e) => setStartTimeInput(e.target.value)}
+                                        onBlur={(e) => handleTimeInputBlur('start', e.target.value)}
+                                        className="w-24 bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 text-center font-mono text-slate-900 font-bold focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all text-sm"
+                                    />
+                                    <span className="text-slate-300 text-sm">-</span>
+                                    <input
+                                        type="text"
+                                        value={endTimeInput}
+                                        onChange={(e) => setEndTimeInput(e.target.value)}
+                                        onBlur={(e) => handleTimeInputBlur('end', e.target.value)}
+                                        className="w-24 bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 text-center font-mono text-slate-900 font-bold focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 2. Mode */}
+                            <div className="flex flex-col items-center border-l border-r border-slate-100 px-4">
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Action Mode</h4>
+                                <div className="flex bg-slate-100 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setCutMode('extract')}
+                                        className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all", cutMode === 'extract' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900")}
+                                    >
+                                        Extract
+                                    </button>
+                                    <button
+                                        onClick={() => setCutMode('delete')}
+                                        className={cn("px-4 py-1.5 rounded-md text-xs font-bold transition-all", cutMode === 'delete' ? "bg-white text-red-600 shadow-sm" : "text-slate-500 hover:text-red-600")}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 3. Fade */}
+                            <div className="flex flex-col items-center">
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Effects</h4>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer select-none group">
+                                        <div className={cn("w-4 h-4 rounded border flex items-center justify-center transition-colors bg-white", fadeIn ? "bg-slate-900 border-slate-900" : "border-slate-300 group-hover:border-slate-400")}>
+                                            {fadeIn && <div className="w-2 h-1 border-l-2 border-b-2 border-white rotate-[-45deg] mb-0.5" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={fadeIn} onChange={(e) => setFadeIn(e.target.checked)} />
+                                        <span className={cn("text-xs font-bold transition-colors", fadeIn ? "text-slate-900" : "text-slate-500")}>Fade In</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer select-none group">
+                                        <div className={cn("w-4 h-4 rounded border flex items-center justify-center transition-colors bg-white", fadeOut ? "bg-slate-900 border-slate-900" : "border-slate-300 group-hover:border-slate-400")}>
+                                            {fadeOut && <div className="w-2 h-1 border-l-2 border-b-2 border-white rotate-[-45deg] mb-0.5" />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={fadeOut} onChange={(e) => setFadeOut(e.target.checked)} />
+                                        <span className={cn("text-xs font-bold transition-colors", fadeOut ? "text-slate-900" : "text-slate-500")}>Fade Out</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     )}
 
                     {activeTool === 'volume' && (
-                        <div className="w-full max-w-md space-y-3">
-                            <div className="flex justify-between text-sm text-slate-600">
-                                <span>Volume</span>
-                                <span className="font-mono text-slate-900 font-bold">{volume}%</span>
+                        <div className="w-full max-w-md space-y-4">
+                            <div className="flex justify-between text-base text-slate-600">
+                                <span className="font-medium">Volume Boost</span>
+                                <span className="font-mono text-slate-900 font-bold bg-slate-100 px-2 py-0.5 rounded">{volume}%</span>
                             </div>
                             <input
                                 type="range"
@@ -264,16 +374,16 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
                                 step="10"
                                 value={volume}
                                 onChange={(e) => setVolume(Number(e.target.value))}
-                                className="w-full accent-slate-900 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                                className="w-full accent-slate-900 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer hover:bg-slate-300 transition-colors"
                             />
                         </div>
                     )}
 
                     {activeTool === 'speed' && (
-                        <div className="w-full max-w-md space-y-3">
-                            <div className="flex justify-between text-sm text-slate-600">
-                                <span>Playback Speed</span>
-                                <span className="font-mono text-slate-900 font-bold">{speed}x</span>
+                        <div className="w-full max-w-md space-y-4">
+                            <div className="flex justify-between text-base text-slate-600">
+                                <span className="font-medium">Playback Speed</span>
+                                <span className="font-mono text-slate-900 font-bold bg-slate-100 px-2 py-0.5 rounded">{speed}x</span>
                             </div>
                             <input
                                 type="range"
@@ -282,13 +392,13 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
                                 step="0.1"
                                 value={speed}
                                 onChange={(e) => setSpeed(Number(e.target.value))}
-                                className="w-full accent-slate-900 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                                className="w-full accent-slate-900 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer hover:bg-slate-300 transition-colors"
                             />
                         </div>
                     )}
 
                     {activeTool === 'eq' && (
-                        <div className="flex space-x-8 w-full max-w-lg justify-center">
+                        <div className="flex space-x-12 w-full max-w-lg justify-center">
                             <EQSlider label="Bass" value={eq.bass} onChange={(v) => setEq({ ...eq, bass: v })} />
                             <EQSlider label="Mid" value={eq.mid} onChange={(v) => setEq({ ...eq, mid: v })} />
                             <EQSlider label="Treble" value={eq.treble} onChange={(v) => setEq({ ...eq, treble: v })} />
@@ -296,41 +406,69 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
                     )}
                 </div>
 
-                {/* Bottom Action Bar */}
-                <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center justify-center w-full md:w-auto">
-                        <button
-                            onClick={togglePlay}
-                            className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-900 text-white hover:scale-105 transition-transform shadow-lg shadow-slate-900/20"
-                        >
-                            {isPlaying ? <Pause className="fill-current w-5 h-5" /> : <Play className="fill-current w-5 h-5 ml-1" />}
-                        </button>
+                {/* Footer: Format & Export */}
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6">
+
+                    {/* Format Selector */}
+                    <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Format:</span>
+                        <div className="flex flex-wrap gap-1">
+                            {['mp3', 'wav', 'm4a', 'aac', 'flac', 'ogg'].map((fmt) => (
+                                <button
+                                    key={fmt}
+                                    onClick={() => setFormat(fmt)}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-md text-xs font-bold uppercase transition-all border",
+                                        format === fmt
+                                            ? "bg-slate-900 text-white border-slate-900"
+                                            : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700"
+                                    )}
+                                >
+                                    {fmt}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="w-full md:w-auto flex justify-center">
+                    {/* Actions */}
+                    <div className="flex items-center gap-4 w-full md:w-auto">
                         <button
-                            onClick={() => onCut(regionStart, regionEnd, { volume, speed, eq })}
+                            onClick={togglePlay}
+                            className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-white text-slate-900 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-all shadow-sm"
+                            title="Play/Pause"
+                        >
+                            {isPlaying ? <Pause className="fill-current w-5 h-5" /> : <Play className="fill-current w-5 h-5 ml-0.5" />}
+                        </button>
+
+                        <button
+                            onClick={() => onCut(regionStart, regionEnd, {
+                                volume,
+                                speed,
+                                eq,
+                                format,
+                                fade: { in: fadeIn, out: fadeOut, duration: 3 },
+                                mode: cutMode,
+                                totalDuration: duration
+                            })}
                             disabled={isProcessing}
                             className={cn(
-                                "group relative overflow-hidden rounded-full px-8 py-3 font-semibold text-white shadow-lg transition-all active:scale-95 w-full md:w-auto",
+                                "flex-1 md:flex-none rounded-xl px-8 py-3 font-bold text-white shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2",
                                 isProcessing
                                     ? "bg-slate-400 cursor-not-allowed"
-                                    : "bg-slate-900 hover:bg-slate-800 shadow-slate-900/20"
+                                    : "bg-slate-900 hover:bg-black hover:shadow-xl"
                             )}
                         >
-                            <span className="relative flex items-center justify-center space-x-2">
-                                {isProcessing ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span>Processing...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Scissors className="w-5 h-5 group-hover:-rotate-12 transition-transform" />
-                                        <span>Process & Save</span>
-                                    </>
-                                )}
-                            </span>
+                            {isProcessing ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Processing...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Scissors className="w-4 h-4" />
+                                    <span>Export {format.toUpperCase()}</span>
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -344,7 +482,7 @@ function ToolButton({ icon, label, active, onClick }: { icon: React.ReactNode, l
         <button
             onClick={onClick}
             className={cn(
-                "flex flex-col items-center justify-center px-4 py-2 rounded-lg transition-all min-w-[80px]",
+                "flex flex-col items-center justify-center px-4 py-2 rounded-lg transition-all duration-150 min-w-[80px]",
                 active
                     ? "bg-slate-100 text-slate-900 font-semibold shadow-inner border border-slate-200"
                     : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"

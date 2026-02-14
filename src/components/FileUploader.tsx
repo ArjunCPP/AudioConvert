@@ -34,42 +34,41 @@ export function FileUploader({ onFileSelect, className, isProcessing = false }: 
         <div
             {...getRootProps()}
             className={cn(
-                'relative flex flex-col items-center justify-center w-full h-96 rounded-3xl border-4 border-dashed transition-all duration-300 cursor-pointer overflow-hidden group bg-white',
+                'relative flex flex-col items-center justify-center w-full h-80 rounded-3xl border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden group bg-zinc-50 hover:bg-white',
                 isDragActive
-                    ? 'border-black bg-slate-100 shadow-2xl scale-[1.02]'
-                    : 'border-slate-900 hover:border-black hover:bg-slate-50 shadow-xl',
+                    ? 'border-slate-900 bg-slate-50 scale-[1.01]'
+                    : 'border-slate-300 hover:border-slate-900 shadow-sm hover:shadow-md',
                 isProcessing && 'pointer-events-none opacity-50',
                 className
             )}
         >
             <input {...getInputProps()} />
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-slate-900/10 pointer-events-none" />
 
             <div className="flex flex-col items-center justify-center space-y-6 text-center z-10 p-8">
                 <div className={cn(
-                    "p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-black transition-all duration-300 group-hover:scale-110 shadow-2xl",
-                    isDragActive && "scale-110 from-black to-slate-900"
+                    "p-5 rounded-2xl bg-white border border-slate-200 shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:border-slate-300",
+                    isDragActive && "bg-slate-900 border-slate-900"
                 )}>
                     {isDragActive ? (
-                        <Upload className="w-12 h-12 text-white" />
+                        <Upload className="w-10 h-10 text-white" />
                     ) : (
-                        <div className="flex space-x-2">
-                            <FileAudio className="w-10 h-10 text-white group-hover:scale-110 transition-transform" />
-                            <FileVideo className="w-10 h-10 text-white group-hover:scale-110 transition-transform" />
+                        <div className="flex space-x-2 text-slate-700">
+                            <FileAudio className="w-8 h-8" />
+                            <FileVideo className="w-8 h-8 opacity-50" />
                         </div>
                     )}
                 </div>
 
-                <div className="space-y-3">
-                    <h3 className="text-2xl font-bold text-slate-900">
+                <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">
                         {isDragActive ? 'Drop the file here' : 'Click to upload or drag and drop'}
                     </h3>
-                    <p className="text-base text-slate-700 max-w-md mx-auto font-medium">
+                    <p className="text-sm text-slate-500 max-w-sm mx-auto">
                         Support for Audio (MP3, WAV, AAC) and Video (MP4, MKV, MOV) conversion to audio.
                     </p>
                 </div>
 
-                <button className="px-8 py-3 rounded-full bg-slate-900 hover:bg-black text-white font-bold shadow-2xl hover:shadow-slate-900/50 transition-all active:scale-95 text-base hover-scale border-2 border-slate-800">
+                <button className="px-8 py-2.5 rounded-lg bg-slate-900 hover:bg-black text-white font-semibold transition-all shadow-md hover:shadow-lg active:scale-95 text-sm">
                     Select File
                 </button>
             </div>

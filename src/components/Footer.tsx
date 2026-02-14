@@ -22,6 +22,12 @@ export function Footer() {
                         >
                             Privacy
                         </Link>
+                        <Link
+                            href="/contact"
+                            className="hover:text-slate-900 transition-all hover:scale-105"
+                        >
+                            Contact
+                        </Link>
                         <span className="text-slate-400">&copy; {new Date().getFullYear()} Regtune.</span>
                     </div>
                 </div>
