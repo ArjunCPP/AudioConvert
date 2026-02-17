@@ -54,6 +54,51 @@ const structuredData = {
       },
     },
     {
+      '@type': 'FAQPage',
+      'mainEntity': [
+        {
+          '@type': 'Question',
+          'name': 'How do I convert video to audio?',
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': 'Simply upload your video file (MP4, MKV, AVI, etc.) to RegTune. The tool will automatically extract the audio track. You can then trim it if needed and download it as an MP3 or other audio format.'
+          }
+        },
+        {
+          '@type': 'Question',
+          'name': 'Is RegTune free to use?',
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': 'Yes, RegTune is 100% free to use. There are no limits on file size or the number of files you can process.'
+          }
+        },
+        {
+          '@type': 'Question',
+          'name': 'Is my data safe?',
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': 'Absolutely. RegTune runs entirely in your browser using WebAssembly technology. Your files are never uploaded to any server, ensuring complete privacy and security.'
+          }
+        },
+        {
+          '@type': 'Question',
+          'name': 'Can I edit audio on my phone?',
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': 'Yes! RegTune is fully responsive and works perfectly on smartphones and tablets, allowing you to edit audio and convert video on the go.'
+          }
+        },
+        {
+          '@type': 'Question',
+          'name': 'What formats do you support?',
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': 'We support all popular audio and video formats including MP3, WAV, OGG, M4A, AAC, MP4, MKV, AVI, MOV, and WMV.'
+          }
+        }
+      ]
+    },
+    {
       '@type': 'Organization',
       'name': 'RegTune',
       'url': 'https://audiocutter.site',
@@ -178,9 +223,9 @@ export default function Home() {
           {/* Intro Text */}
           <div className="text-center mb-16 space-y-6 max-w-3xl">
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-slate-900 leading-tight">
-              Audio Cutter & <br />
+              Video to Audio Converter & <br />
               <span className="text-slate-500">
-                Video to Audio Converter
+                Free Online Audio Cutter
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
@@ -339,6 +384,70 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* SEO Content Section */}
+        <div className="bg-zinc-50 py-24 border-t border-slate-200">
+          <div className="container mx-auto px-6 max-w-4xl">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-8 tracking-tight">
+              The Best Free Online Audio Tools
+            </h2>
+            <div className="prose prose-lg prose-slate text-slate-600 max-w-none">
+              <p className="mb-6">
+                RegTune provides a comprehensive suite of audio editing tools directly in your browser. Whether you are a content creator looking to <strong>extract audio from video</strong> files, a podcaster needing to <strong>trim audio recordings</strong>, or a music enthusiast wanting to adjust the speed or volume of your favorite tracks, RegTune has you covered.
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Why Choose RegTune?</h3>
+              <p className="mb-6">
+                Unlike traditional desktop software that requires bulky installations, RegTune is lightweight and instant. But unlike other online converters, we prioritize your privacy. By leveraging advanced WebAssembly technology, all processing happens locally on your device. This means your sensitive audio and video files are <strong>never uploaded to a server</strong>, ensuring 100% data security and privacy.
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Powerful Features</h3>
+              <ul className="list-disc pl-6 mb-6 space-y-2">
+                <li><strong>Video to Audio Converter:</strong> Easily extract high-quality MP3 audio from MP4, MKV, AVI, and other video formats. Perfect for saving soundtracks, speeches, or music videos as audio files.</li>
+                <li><strong>Precise Audio Cutter:</strong> Our visual waveform editor allows you to trim and cut audio with millisecond precision. Remove unwanted intro/outro or silence effortlessly.</li>
+                <li><strong>Volume Booster:</strong> Is your recording too quiet? Use our volume booster to increase audio levels by up to 200% without distortion.</li>
+                <li><strong>Audio Speed Changer:</strong> Speed up or slow down audio playback. Great for transcribing interviews, learning languages, or creating fun audio effects.</li>
+              </ul>
+              <p>
+                Experience the fastest, safest, and most user-friendly audio editing platform on the web. No sign-up required, no file limits—just professional audio tools at your fingertips.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Ad Banner Before FAQ */}
+        <div className="bg-zinc-50 pb-8">
+          <div className="container mx-auto px-6">
+            <AdBanner />
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="bg-white py-24 border-t border-slate-200">
+          <div className="container mx-auto px-6 max-w-3xl">
+            <h2 className="text-3xl md:text-5xl font-black text-center mb-12 text-slate-900 tracking-tight">Frequently Asked Questions</h2>
+            <div className="space-y-6">
+              <DetailsItem
+                summary="How do I convert video to audio?"
+                details="Simply click the upload area to select your video file (MP4, MKV, AVI, etc.). RegTune will automatically process the file and extract the audio track. You can then use the editor to trim specific parts or download the full audio immediately."
+              />
+              <DetailsItem
+                summary="Is RegTune really free?"
+                details="Yes! RegTune is completely free to use. We believe in providing accessible, high-quality audio tools for everyone. There are no hidden costs, subscriptions, or limits on the number of files you can process."
+              />
+              <DetailsItem
+                summary="Is it safe? Where are my files stored?"
+                details="Your security is our top priority. RegTune operates entirely in your browser using a technology called WebAssembly. This means your files are processed locally on your computer and are NEVER uploaded to any external server. You preserve 100% ownership and privacy of your data."
+              />
+              <DetailsItem
+                summary="What file formats are supported?"
+                details="We support a vast array of formats. For input, we accept MP3, WAV, AAC, M4A, OGG, WMA, as well as video formats like MP4, MKV, AVI, MOV, FLV, and WMV. You can export your processed files as high-quality MP3 or WAV."
+              />
+              <DetailsItem
+                summary="Can I use RegTune on mobile?"
+                details="Absolutely. RegTune is designed with a responsive interface that works flawlessly on iPhones, Android phones, and tablets. You can edit audio and convert videos directly from your mobile browser."
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
@@ -355,6 +464,8 @@ const HowItWorksStep = ({ number, title, description }: { number: number, title:
     </div>
   );
 };
+
+
 
 const FeatureCard = ({ icon, title, description }: {
   icon: React.ReactNode,
@@ -373,5 +484,23 @@ const FeatureCard = ({ icon, title, description }: {
         {description}
       </p>
     </div>
+  );
+};
+
+const DetailsItem = ({ summary, details }: { summary: string, details: string }) => {
+  return (
+    <details className="group bg-zinc-50 rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300 open:bg-white open:shadow-lg open:border-slate-300">
+      <summary className="flex items-center justify-between p-6 cursor-pointer list-none text-lg md:text-xl font-bold text-slate-900 select-none">
+        {summary}
+        <span className="transform transition-transform duration-300 group-open:rotate-180 text-slate-400">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </span>
+      </summary>
+      <div className="px-6 pb-6 text-slate-600 leading-relaxed animate-fade-in-down">
+        {details}
+      </div>
+    </details>
   );
 };

@@ -6,8 +6,8 @@ export function Footer() {
             <div className="container mx-auto px-6">
                 <div className="flex flex-col md:flex-row justify-between items-center">
                     <div className="mb-4 md:mb-0 animate-fade-in">
-                        <span className="font-bold text-slate-900 text-lg">Regtune</span>
-                        <p className="text-slate-500 text-sm mt-1">Professional Audio Tools in your Browser.</p>
+                        <span className="font-bold text-slate-900 text-lg">Audio Cutter</span>
+                        <p className="text-slate-500 text-sm mt-1">Professional Audio Tools. Free Ringtone Maker & Video Converter.</p>
                     </div>
                     <div className="flex space-x-6 text-sm text-slate-500 animate-fade-in stagger-1">
                         <Link
@@ -28,7 +28,7 @@ export function Footer() {
                         >
                             Contact
                         </Link>
-                        <span className="text-slate-400">&copy; {new Date().getFullYear()} Regtune.</span>
+                        <span className="text-slate-400">&copy; {new Date().getFullYear()} Audio Cutter.</span>
                     </div>
                 </div>
             </div>

@@ -17,10 +17,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Audio Editor & Video to Audio Converter - RegTune',
-    template: '%s | RegTune',
+    default: 'Audio Cutter - Cut MP3 & Convert Video to Audio Online Free',
+    template: '%s | RegTune - Free Audio Tools',
   },
-  description: 'Free online Audio Editor and Video to Audio Converter. Edit audio, cut mp3, and convert video to audio instantly. 100% private, secure, and works offline in your browser.',
+  description: 'Free online Audio Editor and Video to Audio Converter. Extract audio from video, trim MP3s, boost volume, and change speed. Fast, secure, and private local processing.',
   keywords: [
     'audio editor',
     'video to audio',
@@ -50,8 +50,8 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://audiocutter.site',
-    title: 'Audio Editor & Video to Audio Converter - RegTune',
-    description: 'Free online Audio Editor and Video to Audio Converter. Edit audio, cut mp3, and convert video to audio instantly.',
+    title: 'Audio Cutter - Cut MP3 & Convert Video to Audio Online Free',
+    description: 'Free online Audio Editor and Video to Audio Converter. Extract audio from video, trim MP3s, boost volume, and change speed. Fast, secure, and private local processing.',
     siteName: 'RegTune',
     images: [
       {
@@ -64,8 +64,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Audio Editor & Video to Audio Converter - RegTune',
-    description: 'Free online Audio Editor and Video to Audio Converter. Edit audio, cut mp3, and convert video to audio instantly.',
+    title: 'Audio Cutter - Cut MP3 & Convert Video to Audio Online Free',
+    description: 'Free online Audio Editor and Video to Audio Converter. Extract audio from video, trim MP3s, boost volume, and change speed. Fast, secure, and private local processing.',
     images: ['/opengraph-image.png'],
     creator: '@regtune', // Update this to your Twitter handle
   },
