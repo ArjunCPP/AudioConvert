@@ -57,8 +57,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({ className }) => {
     return (
         <div
             ref={bannerRef}
-            className={`flex justify-center items-center my-8 ${className}`}
-            style={{ minWidth: '300px', minHeight: '250px' }}
+            className={`flex justify-center items-center ${className}`}
         ></div>
     );
 };
