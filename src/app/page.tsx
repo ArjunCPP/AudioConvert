@@ -6,6 +6,7 @@ import { ProcessOptions } from '@/components/AudioEditor';
 import { extractAudioFromVideo, trimAudio, loadFFmpeg } from '@/utils/audioProcessing';
 import { Video, Scissors, FileDown, Loader2, Volume2, Gauge, Sliders, X, Download } from 'lucide-react';
 import Script from 'next/script';
+import { AdBanner } from '@/components/AdBanner';
 
 const AudioEditor = lazy(() => import('@/components/AudioEditor').then(mod => ({ default: mod.AudioEditor })));
 
@@ -15,7 +16,7 @@ const structuredData = {
     {
       '@type': 'WebApplication',
       'name': 'RegTune - Audio Editor & Video to Audio Converter',
-      'url': 'https://regtune.com',
+      'url': 'https://audiocutter.site',
       'description': 'Free online Audio Editor and Video to Audio Converter. Edit audio, cut mp3, and convert video to audio instantly.',
       'applicationCategory': 'MultimediaApplication',
       'applicationSubCategory': 'AudioEditor',
@@ -55,8 +56,8 @@ const structuredData = {
     {
       '@type': 'Organization',
       'name': 'RegTune',
-      'url': 'https://regtune.com',
-      'logo': 'https://regtune.com/icon.png',
+      'url': 'https://audiocutter.site',
+      'logo': 'https://audiocutter.site/icon.png',
       'sameAs': [
         'https://twitter.com/regtune',
       ],
@@ -187,6 +188,8 @@ export default function Home() {
             </p>
           </div>
 
+          <AdBanner className="mb-12" />
+
           {/* Workspace */}
           <div className="w-full max-w-5xl">
             {isProcessing && view === 'upload' ? (
@@ -248,8 +251,13 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Ad Banner Middle */}
+        <div className="bg-zinc-50 pb-8">
+          <AdBanner />
+        </div>
+
         {/* How it Works Section */}
-        <div className="bg-zinc-50 py-24 border-t border-slate-200">
+        <div className="bg-zinc-50 pt-8 pb-24 border-t border-slate-200">
           <div className="container mx-auto px-6 max-w-6xl">
             <h2 className="text-3xl md:text-5xl font-black text-center mb-16 text-slate-900 tracking-tight">How it Works</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">

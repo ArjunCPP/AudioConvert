@@ -1,4 +1,5 @@
 import { Footer } from "@/components/Footer";
+import { AdBanner } from "@/components/AdBanner";
 import Script from "next/script";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -41,14 +42,14 @@ export const metadata: Metadata = {
   authors: [{ name: 'RegTune' }],
   creator: 'RegTune',
   publisher: 'RegTune',
-  metadataBase: new URL('https://regtune.com'), // Update this to your actual domain
+  metadataBase: new URL('https://audiocutter.site'), // Update this to your actual domain
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://regtune.com',
+    url: 'https://audiocutter.site',
     title: 'Audio Editor & Video to Audio Converter - RegTune',
     description: 'Free online Audio Editor and Video to Audio Converter. Edit audio, cut mp3, and convert video to audio instantly.',
     siteName: 'RegTune',
@@ -100,6 +101,9 @@ export default function RootLayout({
         <main className="flex-grow">
           {children}
         </main>
+        <div className="container mx-auto px-6">
+          <AdBanner />
+        </div>
         <Footer />
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-6196M7GYR0" strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
