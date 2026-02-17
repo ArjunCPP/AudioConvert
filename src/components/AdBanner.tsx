@@ -8,8 +8,13 @@ interface AdBannerProps {
 
 export const AdBanner: React.FC<AdBannerProps> = ({ className }) => {
     const bannerRef = useRef<HTMLDivElement>(null);
+    const initialized = useRef(false);
 
     useEffect(() => {
+        // Prevent double initialization in React Strict Mode
+        if (initialized.current) return;
+        initialized.current = true;
+
         const banner = bannerRef.current;
         if (!banner) return;
 
@@ -39,9 +44,9 @@ export const AdBanner: React.FC<AdBannerProps> = ({ className }) => {
         <html>
         <body style="margin:0;padding:0;">
           <script type="text/javascript">
-            atOptions = ${JSON.stringify(atOptions)};
-          </script>
-          <script type="text/javascript" src="//www.highperformanceformat.com/b2fe9f40a9aedb7715c0dd624a23a337/invoke.js"></script>
+            var atOptions = ${JSON.stringify(atOptions)};
+          <\/script>
+          <script type="text/javascript" src="https://www.highperformanceformat.com/b2fe9f40a9aedb7715c0dd624a23a337/invoke.js"><\/script>
         </body>
         </html>
       `);
@@ -50,6 +55,10 @@ export const AdBanner: React.FC<AdBannerProps> = ({ className }) => {
     }, []);
 
     return (
-        <div ref={bannerRef} className={`flex justify-center items-center my-8 ${className}`}></div>
+        <div
+            ref={bannerRef}
+            className={`flex justify-center items-center my-8 ${className}`}
+            style={{ minWidth: '300px', minHeight: '250px' }}
+        ></div>
     );
 };
