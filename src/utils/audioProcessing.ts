@@ -32,8 +32,16 @@ export const extractAudioFromVideo = async (videoFile: File, onProgress?: (progr
         });
     }
 
-    // Extract audio: -vn (no video) -acodec libmp3lame -q:a 2 (high quality)
-    await ffmpeg.exec(['-i', inputName, '-vn', '-acodec', 'libmp3lame', '-q:a', '2', outputName]);
+    // Extract audio: fast CBR 128k, limit threads, lower sample rate for speed
+    await ffmpeg.exec([
+        '-i', inputName,
+        '-vn',
+        '-acodec', 'libmp3lame',
+        '-b:a', '128k',        // CBR is faster than VBR
+        '-ar', '44100',        // Standard sample rate
+        '-ac', '2',            // Stereo
+        outputName
+    ]);
 
     const data = await ffmpeg.readFile(outputName);
 

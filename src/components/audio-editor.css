@@ -1,46 +1,66 @@
-/* Custom styles for WaveSurfer handles */
+/* Custom styles for WaveSurfer region handles */
 
-/* The handles are divs with class .wavesurfer-handle */
-/* We want distinct, thick visual handles to replicate the "two side" look */
+/* ============================================
+   REGION HANDLES - Mobile-Optimized Touch Targets
+   ============================================ */
 
-/* Left Handle */
+/* Left Handle - Visual */
 .wavesurfer-region::part(region-handle-left) {
-  width: 4px !important;
-  background-color: #000000 !important;
-  /* Black */
-  border-radius: 4px 0 0 4px;
+  width: 18px !important;
+  background-color: #ef4444 !important;
+  border-radius: 6px 0 0 6px;
+  cursor: ew-resize;
+  touch-action: none;
+  opacity: 0.9;
 }
 
-/* Right Handle */
+/* Right Handle - Visual */
 .wavesurfer-region::part(region-handle-right) {
-  width: 4px !important;
-  background-color: #000000 !important;
-  /* Black */
-  border-radius: 0 4px 4px 0;
+  width: 18px !important;
+  background-color: #ef4444 !important;
+  border-radius: 0 6px 6px 0;
+  cursor: ew-resize;
+  touch-action: none;
+  opacity: 0.9;
 }
 
-/* Add a visual "grabber" icon if possible via ::before/::after, 
-   but WaveSurfer might shadowDOM or inline style this. 
-   Let's try standard CSS first which usually applies if not shadow DOM.
-*/
-
-/* 
-  WaveSurfer 7 uses shadow DOM or specific structure. 
-  If Shadow DOM is used, external CSS might not apply easily unless using parts.
-  The regions plugin exposes parts.
-*/
-
+/* Fallback selectors for older WaveSurfer versions */
 [part="region-handle-left"],
 [part="region-handle-right"] {
-  background-color: #ffffff !important;
-  width: 6px !important;
-  max-width: 6px !important;
+  background-color: #ef4444 !important;
+  width: 18px !important;
+  max-width: 18px !important;
+  touch-action: none;
 }
 
-/* Let's try to target the elements generally if parts aren't working immediately */
+/* Generic handle class fallback */
 .wavesurfer-handle {
-  width: 6px !important;
-  background-color: white !important;
+  width: 18px !important;
+  background-color: #ef4444 !important;
   border-radius: 4px;
   height: 100%;
+  touch-action: none;
+  cursor: ew-resize;
+}
+
+/* ============================================
+   WAVEFORM CONTAINER - Prevent scroll conflicts on mobile
+   ============================================ */
+.wavesurfer-wrapper {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Ensure the waveform canvas doesn't intercept scroll */
+wave {
+  touch-action: none !important;
+  overflow: hidden !important;
+}
+
+/* ============================================
+   REGION - Make the region itself easier to drag
+   ============================================ */
+.wavesurfer-region {
+  touch-action: none;
 }

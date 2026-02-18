@@ -290,7 +290,11 @@ export function AudioEditor({ audioUrl, fileName, onCut, onReset, isProcessing =
 
                 {/* Main Editor Area */}
                 <div className="relative p-8 bg-zinc-50 min-h-[220px]">
-                    <div ref={containerRef} className="w-full" />
+                    <div
+                        ref={containerRef}
+                        className="w-full wavesurfer-wrapper"
+                        style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
+                    />
                     <div ref={timelineRef} className="w-full mt-2" />
                 </div>
 
